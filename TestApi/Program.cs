@@ -1,4 +1,7 @@
+using System;
 using Microsoft.OpenApi.Models;
+using OpenTelemetry.Trace;
+using OpenTelemetry.Resources;
 using TestApi.Application.Users;
 using TestApi.Application.Orders;
 using TestApi.Domain.Interfaces;
@@ -37,6 +40,28 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 builder.Services.AddHttpClient();
+
+// OpenTelemetry tracing
+builder.Services.AddOpenTelemetryTracing(tracerProviderBuilder =>
+{
+    tracerProviderBuilder
+        .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(builder.Environment.ApplicationName ?? "TestApi"))
+        // instrument controller-created ActivitySource names
+        .AddSource("TestApi.Controllers.Users", "TestApi.Controllers.Orders", "TestApi.Controllers.Auth")
+        .AddAspNetCoreInstrumentation()
+        .AddHttpClientInstrumentation();
+
+    // If an OTLP endpoint is configured use it, otherwise fall back to console exporter for local/dev
+    var otlpEndpoint = builder.Configuration["OpenTelemetry:OtlpEndpoint"];
+    if (!string.IsNullOrWhiteSpace(otlpEndpoint))
+    {
+        tracerProviderBuilder.AddOtlpExporter(options => options.Endpoint = new Uri(otlpEndpoint));
+    }
+    else
+    {
+        tracerProviderBuilder.AddConsoleExporter();
+    }
+});
 
 builder.Services
     .AddAuthentication("Bearer")

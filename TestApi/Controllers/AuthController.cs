@@ -1,6 +1,7 @@
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
+using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 
 namespace TestApi.Controllers;
@@ -10,6 +11,8 @@ namespace TestApi.Controllers;
 public class AuthController : ControllerBase
 {
     private readonly IHttpClientFactory _httpClientFactory;
+
+    private static readonly ActivitySource ActivitySource = new("TestApi.Controllers.Auth");
 
     public AuthController(IHttpClientFactory httpClientFactory)
     {
@@ -24,6 +27,9 @@ public class AuthController : ControllerBase
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
+        using var activity = ActivitySource.StartActivity("Auth.Login");
+        activity?.SetTag("auth.username", request.Username);
+
         var client = _httpClientFactory.CreateClient();
 
         var tokenEndpoint = $"{Request.Scheme}://{Request.Host}/connect/token";

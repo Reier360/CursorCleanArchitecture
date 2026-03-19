@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Diagnostics;
 using TestApi.Application.Users;
 
 namespace TestApi.Controllers;
@@ -9,6 +10,7 @@ namespace TestApi.Controllers;
 [Authorize]
 public class UsersController : ControllerBase
 {
+    private static readonly ActivitySource ActivitySource = new("TestApi.Controllers.Users");
     private readonly IUserService _userService;
 
     public UsersController(IUserService userService)
@@ -19,6 +21,7 @@ public class UsersController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<UserDto>>> GetAll(CancellationToken cancellationToken)
     {
+        using var activity = ActivitySource.StartActivity("Users.GetAll");
         var users = await _userService.GetAllAsync(cancellationToken);
 
         if (users is null || !users.Any())
@@ -36,6 +39,8 @@ public class UsersController : ControllerBase
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<UserDto>> GetById(Guid id, CancellationToken cancellationToken)
     {
+        using var activity = ActivitySource.StartActivity("Users.GetById");
+        activity?.SetTag("user.id", id.ToString());
         var user = await _userService.GetByIdAsync(id, cancellationToken);
         if (user is null)
         {
