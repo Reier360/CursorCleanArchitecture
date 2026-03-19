@@ -20,6 +20,16 @@ public class UsersController : ControllerBase
     public async Task<ActionResult<IReadOnlyList<UserDto>>> GetAll(CancellationToken cancellationToken)
     {
         var users = await _userService.GetAllAsync(cancellationToken);
+
+        if (users is null || !users.Any())
+        {
+            foreach (var user in users)
+            {
+
+            }
+
+        }
+        
         return Ok(users);
     }
 
@@ -41,6 +51,7 @@ public class UsersController : ControllerBase
         var created = await _userService.CreateAsync(request, cancellationToken);
         if (created is null)
         {
+            
             return BadRequest("Email is already in use.");
         }
 

@@ -1,5 +1,6 @@
 using Microsoft.OpenApi.Models;
 using TestApi.Application.Users;
+using TestApi.Application.Orders;
 using TestApi.Domain.Interfaces;
 using TestApi.Identity;
 using TestApi.Infrastructure.Repositories;
@@ -48,6 +49,9 @@ builder.Services
 
 builder.Services.AddSingleton<IUserRepository, InMemoryUserRepository>();
 builder.Services.AddScoped<IUserService, UserService>();
+
+builder.Services.AddSingleton<IOrderRepository, InMemoryOrderRepository>();
+builder.Services.AddScoped<IOrderService, OrderService>();
 
 builder.Services
     .AddIdentityServer()
