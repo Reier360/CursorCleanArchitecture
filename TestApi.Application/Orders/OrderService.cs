@@ -21,6 +21,12 @@ public sealed class OrderService : IOrderService
         return orders.Select(MapToDto).ToList();
     }
 
+    public async Task<IReadOnlyList<OrderDto>> GetByUserAsync(Guid userId, CancellationToken cancellationToken = default)
+    {
+        var orders = await _repository.GetByUserIdAsync(userId, cancellationToken);
+        return orders.Select(MapToDto).ToList();
+    }
+
     public async Task<OrderDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
         var order = await _repository.GetByIdAsync(id, cancellationToken);

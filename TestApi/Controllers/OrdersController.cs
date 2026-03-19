@@ -23,6 +23,13 @@ public class OrdersController : ControllerBase
         return Ok(orders);
     }
 
+    [HttpGet("user/{userId:guid}")]
+    public async Task<ActionResult<IReadOnlyList<OrderDto>>> GetByUser(Guid userId, CancellationToken cancellationToken)
+    {
+        var orders = await _orderService.GetByUserAsync(userId, cancellationToken);
+        return Ok(orders);
+    }
+
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<OrderDto>> GetById(Guid id, CancellationToken cancellationToken)
     {

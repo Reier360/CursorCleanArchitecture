@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Linq;
 using TestApi.Domain.Entities;
 using TestApi.Domain.Interfaces;
 
@@ -11,6 +12,16 @@ public sealed class InMemoryOrderRepository : IOrderRepository
     public Task<IReadOnlyList<Order>> GetAllAsync(CancellationToken cancellationToken = default)
     {
         var list = _orders.Values.OrderBy(o => o.CreatedAtUtc).ToList();
+        return Task.FromResult<IReadOnlyList<Order>>(list);
+    }
+
+    public Task<IReadOnlyList<Order>> GetByUserIdAsync(Guid userId, CancellationToken cancellationToken = default)
+    {
+        var list = _orders.Values
+            .Where(o => o.UserId == userId)
+            .OrderBy(o => o.CreatedAtUtc)
+            .ToList();
+
         return Task.FromResult<IReadOnlyList<Order>>(list);
     }
 
