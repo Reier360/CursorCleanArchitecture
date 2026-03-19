@@ -1,3 +1,4 @@
+using System.Linq;
 using TestApi.Domain.Entities;
 using TestApi.Domain.Interfaces;
 
@@ -6,10 +7,12 @@ namespace TestApi.Application.Orders;
 public sealed class OrderService : IOrderService
 {
     private readonly IOrderRepository _repository;
+    private readonly IUserRepository _userRepository;
 
-    public OrderService(IOrderRepository repository)
+    public OrderService(IOrderRepository repository, IUserRepository userRepository)
     {
         _repository = repository;
+        _userRepository = userRepository;
     }
 
     public async Task<IReadOnlyList<OrderDto>> GetAllAsync(CancellationToken cancellationToken = default)
@@ -26,15 +29,27 @@ public sealed class OrderService : IOrderService
 
     public async Task<OrderDto?> CreateAsync(CreateOrderRequest request, CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(request.CustomerName) || request.Total < 0)
+        if (request.Total < 0)
         {
             return null;
         }
 
+        var user = await _userRepository.GetByIdAsync(request.UserId, cancellationToken);
+        if (user is null)
+        {
+            return null;
+        }
+
+        var customerName = !string.IsNullOrWhiteSpace(request.CustomerName)
+            ? request.CustomerName!.Trim()
+            : user.Name;
+
         var order = new Order
         {
-            CustomerName = request.CustomerName.Trim(),
-            Total = request.Total
+            CustomerName = customerName,
+            Total = request.Total,
+            UserId = user.Id,
+            UserName = user.Name
         };
 
         await _repository.AddAsync(order, cancellationToken);
@@ -47,6 +62,18 @@ public sealed class OrderService : IOrderService
         if (order is null)
         {
             return null;
+        }
+
+        if (request.UserId is not null && request.UserId != Guid.Empty && request.UserId != order.UserId)
+        {
+            var newUser = await _userRepository.GetByIdAsync(request.UserId.Value, cancellationToken);
+            if (newUser is null)
+            {
+                return null;
+            }
+
+            order.UserId = newUser.Id;
+            order.UserName = newUser.Name;
         }
 
         if (!string.IsNullOrWhiteSpace(request.CustomerName))
@@ -85,6 +112,8 @@ public sealed class OrderService : IOrderService
         {
             Id = order.Id,
             CustomerName = order.CustomerName,
+            UserId = order.UserId,
+            UserName = order.UserName,
             Total = order.Total,
             CreatedAtUtc = order.CreatedAtUtc
         };

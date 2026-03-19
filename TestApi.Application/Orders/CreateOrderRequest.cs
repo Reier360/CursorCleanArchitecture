@@ -2,6 +2,7 @@ namespace TestApi.Application.Orders;
 
 public sealed class CreateOrderRequest
 {
-    public string CustomerName { get; init; } = string.Empty;
+    public Guid UserId { get; init; }
+    public string? CustomerName { get; init; }
     public decimal Total { get; init; }
 }
